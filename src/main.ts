@@ -4,6 +4,12 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin:[
+      "http://localhost:3000"
+    ]
+  })
   const config = new DocumentBuilder()
     .setTitle('El Mahdy Internal System')
     .setDescription('API documentation for El-Mahdy-internal-system')
@@ -18,7 +24,7 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
 
-  console.log(`Server is running on: http://localhost:3000`)
-  console.log(`Swagger docs available at: http://localhost:3000/api-docs`)
+  console.log(`Server is running on: http://localhost:${process.env.PORT}`)
+  console.log(`Swagger docs available at: http://localhost:${process.env.PORT}/api-docs`)
 }
 bootstrap();

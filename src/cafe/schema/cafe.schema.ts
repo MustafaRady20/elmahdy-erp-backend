@@ -12,7 +12,7 @@ export class Cafe {
   description?: string;
 
   @Prop({ required: true })
-  location: string;
+  branch: string;
 }
 
 export const CafeSchema = SchemaFactory.createForClass(Cafe);

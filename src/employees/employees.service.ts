@@ -11,7 +11,10 @@ export class EmployeesService {
   ) {}
 
   async create(createEmployeeDto: CreateEmployeeDto): Promise<Employees> {
-    const newEmployee = new this.employeeModel(createEmployeeDto);
+    const newEmployee = new this.employeeModel({
+      ...createEmployeeDto,
+      password:createEmployeeDto.phone
+    });
     return newEmployee.save();
   }
 

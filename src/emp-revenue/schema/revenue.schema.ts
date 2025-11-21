@@ -1,13 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { Activity } from 'src/activity/schema/activity.schema';
 
 export type EmpRevenueDocument = EmpRevenue & Document;
 
 @Schema({ timestamps: true })
 export class EmpRevenue {
-  @Prop({ required: true, enum: ['luggage', 'cleaning'] })
-  type: 'luggage' | 'cleaning';
-
+  @Prop({ type: Types.ObjectId, ref: 'Activity' })
+  activity: Activity;
+  
   @Prop({ required: true })
   amount: number;
 

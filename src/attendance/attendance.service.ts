@@ -87,7 +87,7 @@ export class AttendanceService {
     return attendance.save();
   }
 
-  async getTodayAttendance(employeeId: string) {
+  async getTodayAttendance() {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -95,7 +95,6 @@ export class AttendanceService {
     endOfDay.setHours(23, 59, 59, 999);
 
     const record = await this.attendanceModel.findOne({
-      employeeId: new Types.ObjectId(employeeId),
       checkInTime: { $gte: startOfDay, $lte: endOfDay },
     });
 

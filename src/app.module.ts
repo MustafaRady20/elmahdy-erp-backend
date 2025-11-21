@@ -1,16 +1,20 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
 import { EmployeesModule } from './employees/employees.module';
 import { EmpRevenueModule } from './emp-revenue/emp-revenue.module';
 import { CafeModule } from './cafe/cafe.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { ReviewModule } from './reviews/reviews.module';
 import { ReservationModule } from './reservations/reservations.module';
-import { ReservationService } from './reservations/reservations.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
+import { RulesModule } from './rules/rules.module';
+import { CafeRevenueModule } from './cafe-revenue/cafe-revenue.module';
+import { CafePurchasesModule } from './cafe-purchases/cafe-purchases.module';
+import { ActivityModule } from './activity/activity.module';
+import { CategoryModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -25,13 +29,19 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    AuthModule,
+    
     EmployeesModule,
     ReservationModule,
     ReviewModule,
     EmpRevenueModule,
     CafeModule,
     AttendanceModule,
+    AuthModule,
+    RulesModule,
+    CafeRevenueModule,
+    CafePurchasesModule,
+    CategoryModule,
+    ActivityModule
   ],
   controllers: [AppController],
   providers: [AppService],

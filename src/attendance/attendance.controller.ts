@@ -88,10 +88,9 @@ export class AttendanceController {
     status: 200,
     description: 'Attendance record for today.',
   })
-  async today(@Query('employeeId') employeeId: string) {
-    if (!employeeId)
-      throw new BadRequestException('employeeId query parameter is required.');
-    return this.attendanceService.getTodayAttendance(employeeId);
+  async today() {
+   
+    return this.attendanceService.getTodayAttendance();
   }
 
   @Get('current-month')

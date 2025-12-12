@@ -1,8 +1,8 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Attendance } from './schema/attendance.schema';
-import { Employees } from 'src/employees/schema/employee.schema';
+import { Attendance, AttendanceDocument } from './schema/attendance.schema';
+import { Employees, EmployeesDocument } from 'src/employees/schema/employee.schema';
 
 @Injectable()
 export class AttendanceService {
@@ -14,8 +14,9 @@ export class AttendanceService {
 
   constructor(
     @InjectModel(Attendance.name)
-    private attendanceModel: Model<Attendance>,
-    @InjectModel(Employees.name) private employeeModel: Model<Employees>
+    private attendanceModel: Model<AttendanceDocument>,
+
+    @InjectModel(Employees.name) private employeeModel: Model<EmployeesDocument>
   ) {}
 
   private distanceInMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -45,26 +46,28 @@ export class AttendanceService {
   }
 
   async checkIn(employeeId: string, lat: number, lng: number) {
-    this.validateLocation(lat, lng);
+    // this.validateLocation(lat, lng);
 
     const existing = await this.attendanceModel.findOne({
       employeeId: new Types.ObjectId(employeeId),
       checkOutTime: { $exists: false },
     });
+    console.log(existing)
 
     if (existing) {
       throw new BadRequestException('You have already checked in.');
+    
     }
 
     return this.attendanceModel.create({
-      employeeId,
+      employeeId: new Types.ObjectId(employeeId),
       checkInTime: new Date(),
       checkInLocation: `${lat},${lng}`,
     });
   }
 
   async checkOut(employeeId: string, lat: number, lng: number) {
-    this.validateLocation(lat, lng);
+    // this.validateLocation(lat, lng);
 
     const attendance = await this.attendanceModel.findOne({
       employeeId: new Types.ObjectId(employeeId),
@@ -94,9 +97,9 @@ export class AttendanceService {
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    const record = await this.attendanceModel.findOne({
+    const record = await this.attendanceModel.find({
       checkInTime: { $gte: startOfDay, $lte: endOfDay },
-    });
+    }).populate("employeeId","_id name")
 
     if (!record) return { message: 'No attendance record found for today.' };
 

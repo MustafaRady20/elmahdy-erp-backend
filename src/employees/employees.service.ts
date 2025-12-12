@@ -8,7 +8,9 @@ import { CreateEmployeeDto, UpdateEmployeeDto } from './dto/employee.dto';
 export class EmployeesService {
   constructor(
     @InjectModel(Employees.name) private employeeModel: Model<EmployeesDocument>,
-  ) {}
+  ) {
+
+  }
 
   async create(createEmployeeDto: CreateEmployeeDto): Promise<Employees> {
     const newEmployee = new this.employeeModel({
@@ -20,6 +22,7 @@ export class EmployeesService {
 
   async findAll(filters: Record<string, any>): Promise<Employees[]> {
     const query: FilterQuery<EmployeesDocument> = {};
+        console.log('📌 activityModel Collection Name:', this.employeeModel.collection.collectionName);
 
     if (filters.name) query.name = { $regex: filters.name, $options: 'i' };
     if (filters.phone) query.phone = { $regex: filters.phone, $options: 'i' };

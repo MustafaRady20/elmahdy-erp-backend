@@ -2,13 +2,14 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, Document } from 'mongoose';
 
 export type EmployeesDocument = Employees & Document;
+
 export enum EmployeeRole {
   EMPLOYEE = 'employee',
   MANAGER = 'manager',
   SUPERVISOR = 'supervisor',
 }
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true ,collection:"employees"})
 export class Employees {
   _id: Types.ObjectId;
 

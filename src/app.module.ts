@@ -15,6 +15,9 @@ import { CafeRevenueModule } from './cafe-revenue/cafe-revenue.module';
 import { CafePurchasesModule } from './cafe-purchases/cafe-purchases.module';
 import { ActivityModule } from './activity/activity.module';
 import { CategoryModule } from './categories/categories.module';
+import { WhatsappModule } from './whatsapp/whatsapp.module';
+import { SalaryModule } from './salaries/salaries.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -41,7 +44,10 @@ import { CategoryModule } from './categories/categories.module';
     CafeRevenueModule,
     CafePurchasesModule,
     CategoryModule,
-    ActivityModule
+    ActivityModule,
+    WhatsappModule,
+    SalaryModule,
+    DashboardModule
   ],
   controllers: [AppController],
   providers: [AppService],

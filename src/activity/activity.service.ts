@@ -2,21 +2,27 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Activity, ActivityDocument } from './schema/activity.schema';
-import { CreateActivityDto, UpdateActivityDto } from './schema/dto/activity.dto';
+import { CreateActivityDto, UpdateActivityDto } from './dto/activity.dto';
 
 @Injectable()
 export class ActivityService {
   constructor(
     @InjectModel(Activity.name)
     private activityModel: Model<ActivityDocument>,
-  ) {}
+  ) {
 
+  }
+
+  
   async create(dto: CreateActivityDto) {
     return await this.activityModel.create(dto);
   }
 
   async findAll() {
+        console.log('📌 activityModel Collection Name:', this.activityModel.collection.collectionName);
+
     return await this.activityModel.find().sort({ createdAt: -1 });
+
   }
 
   async findOne(id: string) {

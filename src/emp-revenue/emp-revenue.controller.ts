@@ -9,105 +9,85 @@ import {
   Query,
 } from '@nestjs/common';
 import { EmpRevenueService } from './emp-revenue.service';
-import { ApiTags, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
-import { CreateEmpRevenueDto, UpdateEmpRevenueDto } from './dto/emp-revenue.dto';
+import {
+  CreateEmpRevenueDto,
+  UpdateEmpRevenueDto,
+} from './dto/emp-revenue.dto';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiQuery,
+  ApiParam,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 @ApiTags('Employee Revenue')
 @Controller('emp-revenue')
 export class EmpRevenueController {
-  constructor(private readonly revenueService: EmpRevenueService) {}
+  constructor(private readonly service: EmpRevenueService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new employee revenue record' })
+  @ApiOperation({ summary: 'Create revenue entry for employee and activity' })
+  @ApiResponse({
+    status: 201,
+    description: 'Revenue record created successfully',
+  })
   create(@Body() dto: CreateEmpRevenueDto) {
-    return this.revenueService.create(dto);
+    return this.service.create(dto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all revenue records' })
+  @ApiOperation({
+    summary: 'Get all revenue records with activity and employee populated',
+  })
+  @ApiResponse({ status: 200, description: 'List of all revenue records' })
   findAll() {
-    return this.revenueService.findAll();
-  }
-
-  @Get('employee/:id')
-  @ApiOperation({ summary: 'Get revenue records by employee' })
-  @ApiParam({ name: 'id', example: '677f1234bdc12f45b8c1d111' })
-  findByEmployee(@Param('id') employeeId: string) {
-    return this.revenueService.findByEmployee(employeeId);
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Get revenue record by ID' })
-  findOne(@Param('id') id: string) {
-    return this.revenueService.findById(id);
+    return this.service.findAll();
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a revenue record' })
+  @ApiOperation({ summary: 'Update specific revenue entry by ID' })
+  @ApiParam({ name: 'id', description: 'Revenue Record ID' })
+  @ApiResponse({ status: 200, description: 'Record updated' })
   update(@Param('id') id: string, @Body() dto: UpdateEmpRevenueDto) {
-    return this.revenueService.update(id, dto);
+    return this.service.update(id, dto);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a revenue record' })
+  @ApiOperation({ summary: 'Delete revenue entry' })
+  @ApiParam({ name: 'id', description: 'Revenue Record ID' })
+  @ApiResponse({ status: 200, description: 'Record deleted' })
   delete(@Param('id') id: string) {
-    return this.revenueService.delete(id);
+    return this.service.delete(id);
   }
 
-  // ============================
-  // REPORTING ENDPOINTS
-  // ============================
-
-  @Get('report/daily')
-  @ApiOperation({ summary: 'Get daily revenue for a specific date' })
-  @ApiQuery({ name: 'date', example: '2025-11-20' })
-  getDaily(@Query('date') date: string) {
-    return this.revenueService.getDailyRevenue(date);
-  }
-
-  @Get('report/weekly')
-  @ApiOperation({ summary: 'Get weekly revenue (last 7 days)' })
-  getWeekly() {
-    return this.revenueService.getWeeklyRevenue();
-  }
-
-  @Get('report/monthly')
-  @ApiOperation({ summary: 'Get monthly revenue' })
-  @ApiQuery({ name: 'year', example: 2025 })
-  @ApiQuery({ name: 'month', example: 11 })
-  getMonthly(
-    @Query('year') year: number,
-    @Query('month') month: number,
+  @Get('report')
+  @ApiOperation({
+    summary: 'Generate revenue report (daily/weekly/monthly/yearly)',
+  })
+  @ApiQuery({
+    name: 'period',
+    required: false,
+    enum: ['daily', 'weekly', 'monthly', 'yearly'],
+    example: 'monthly',
+  })
+  @ApiResponse({ status: 200, description: 'Revenue analytics result' })
+  report(
+    @Query('period')
+    period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly',
   ) {
-    return this.revenueService.getMonthlyRevenue(year, month);
+    return this.service.report(period);
   }
-
-  @Get('report/yearly')
-  @ApiOperation({ summary: 'Get yearly revenue' })
-  @ApiQuery({ name: 'year', example: 2025 })
-  getYearly(@Query('year') year: number) {
-    return this.revenueService.getYearlyRevenue(year);
-  }
-
-  // -------------------------
-  // ADVANCED AGGREGATION
-  // -------------------------
-
-  @Get('report/group-by/employee')
-  @ApiOperation({ summary: 'Total revenue grouped by employee' })
-  aggEmployee() {
-    return this.revenueService.groupByEmployee();
-  }
-
-  @Get('report/group-by/activity')
-  @ApiOperation({ summary: 'Total revenue grouped by activity' })
-  aggActivity() {
-    return this.revenueService.groupByActivity();
-  }
-
-  @Get('report/totals')
-  @ApiOperation({ summary: 'Get total sum of all revenue' })
-  totals() {
-    return this.revenueService.getTotalRevenue();
+  @Get('employee/:id')
+  @ApiOperation({ summary: 'Get all revenue details for a specific employee' })
+  @ApiParam({ name: 'id', description: 'Employee ID' })
+  @ApiQuery({ name: 'limit', required: false, example: 20 })
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  findByEmployee(
+    @Param('id') employeeId: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.service.findByEmployee(employeeId, +page, +limit);
   }
 }

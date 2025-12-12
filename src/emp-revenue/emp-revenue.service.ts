@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { EmpRevenue, EmpRevenueDocument } from './schema/revenue.schema';
 import {
   CreateEmpRevenueDto,
@@ -11,108 +11,75 @@ import {
 export class EmpRevenueService {
   constructor(
     @InjectModel(EmpRevenue.name)
-    private readonly revenueModel: Model<EmpRevenueDocument>,
+    private readonly model: Model<EmpRevenueDocument>,
   ) {}
 
   async create(dto: CreateEmpRevenueDto) {
-    return this.revenueModel.create(dto);
+    return this.model.create({
+      ...dto,
+      activity: new Types.ObjectId(dto.activity),
+      employee: new Types.ObjectId(dto.employee),
+    });
   }
 
   async findAll() {
-    return this.revenueModel
-      .find()
-      .populate('activity')
-      .populate('employee')
-      .sort({ createdAt: -1 });
-  }
+    console.log(
+      '📌 EmpRevenue Collection Name:',
+      this.model.collection.collectionName,
+    );
 
-  async findById(id: string) {
-    const record = await this.revenueModel
-      .findById(id)
-      .populate('activity')
-      .populate('employee');
-
-    if (!record) throw new NotFoundException('Revenue record not found');
-
-    return record;
-  }
-
-  async findByEmployee(employeeId: string) {
-    return this.revenueModel
-      .find({ employee: employeeId })
-      .populate('activity')
-      .sort({ createdAt: -1 });
+    return this.model.find().populate('activity').populate('employee').exec();
   }
 
   async update(id: string, dto: UpdateEmpRevenueDto) {
-    const updated = await this.revenueModel.findByIdAndUpdate(id, dto, {
-      new: true,
-    });
-
-    if (!updated) throw new NotFoundException('Revenue record not found');
-
-    return updated;
+    const record = await this.model.findByIdAndUpdate(id, dto, { new: true });
+    if (!record) throw new NotFoundException('Record not found');
+    return record;
   }
 
   async delete(id: string) {
-    const deleted = await this.revenueModel.findByIdAndDelete(id);
-
-    if (!deleted) throw new NotFoundException('Revenue record not found');
-
-    return deleted;
+    return this.model.findByIdAndDelete(id);
   }
 
-  // -----------------------------
-  // REPORTS (Daily, Weekly, Monthly, Yearly)
-  // -----------------------------
+  // ---------------- REPORTS ---------------- //
 
-  async getDailyRevenue(date: string) {
-    const targetDate = new Date(date);
-    const start = new Date(targetDate.setHours(0, 0, 0, 0));
-    const end = new Date(targetDate.setHours(23, 59, 59, 999));
+  private getDateRange(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
+    const now = new Date();
+    let start: Date;
 
-    return this.revenueModel.find({
-      date: { $gte: start, $lte: end },
-    });
+    switch (period) {
+      case 'daily':
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'weekly':
+        const day = now.getDay();
+        start = new Date(now);
+        start.setDate(now.getDate() - day);
+        break;
+      case 'monthly':
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'yearly':
+        start = new Date(now.getFullYear(), 0, 1);
+        break;
+    }
+
+    return { start, end: now };
   }
 
-  async getWeeklyRevenue() {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - 7);
+  async report(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
+    const { start, end } = this.getDateRange(period);
 
-    return this.revenueModel.find({
-      date: { $gte: start, $lte: end },
-    });
-  }
+    const match = { date: { $gte: start, $lte: end } };
 
-  async getMonthlyRevenue(year: number, month: number) {
-    const start = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 0, 23, 59, 59, 999);
+    const totalRevenue = await this.model.aggregate([
+      { $match: match },
+      { $group: { _id: null, totalRevenue: { $sum: '$amount' } } },
+    ]);
 
-    return this.revenueModel.find({
-      date: { $gte: start, $lte: end },
-    });
-  }
-
-  async getYearlyRevenue(year: number) {
-    const start = new Date(year, 0, 1);
-    const end = new Date(year, 11, 31, 23, 59, 59, 999);
-
-    return this.revenueModel.find({
-      date: { $gte: start, $lte: end },
-    });
-  }
-
-  async groupByEmployee() {
-    return this.revenueModel.aggregate([
-      {
-        $group: {
-          _id: '$employee',
-          totalRevenue: { $sum: '$amount' },
-          count: { $sum: 1 },
-        },
-      },
+    const revenueByEmployee = await this.model.aggregate([
+      { $match: match },
+      { $group: { _id: '$employee', total: { $sum: '$amount' } } },
       {
         $lookup: {
           from: 'employees',
@@ -123,16 +90,10 @@ export class EmpRevenueService {
       },
       { $unwind: '$employee' },
     ]);
-  }
-  async groupByActivity() {
-    return this.revenueModel.aggregate([
-      {
-        $group: {
-          _id: '$activity',
-          totalRevenue: { $sum: '$amount' },
-          count: { $sum: 1 },
-        },
-      },
+
+    const revenueByActivity = await this.model.aggregate([
+      { $match: match },
+      { $group: { _id: '$activity', total: { $sum: '$amount' } } },
       {
         $lookup: {
           from: 'activities',
@@ -143,19 +104,38 @@ export class EmpRevenueService {
       },
       { $unwind: '$activity' },
     ]);
-  }
 
-  async getTotalRevenue() {
-    const result = await this.revenueModel.aggregate([
-      {
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: '$amount' },
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
-    return result[0] || { totalRevenue: 0, count: 0 };
+    return {
+      period,
+      totalRevenue: totalRevenue[0]?.totalRevenue || 0,
+      revenueByEmployee,
+      revenueByActivity,
+    };
   }
+async findByEmployee(employeeId: string, page = 1, limit = 20) {
+  const skip = (page - 1) * limit;
+
+  const total = await this.model.countDocuments({
+    employee: new Types.ObjectId(employeeId),
+  });
+
+  const data = await this.model
+    .find({ employee: new Types.ObjectId(employeeId) })
+    .populate('activity')
+    .populate('employee')
+    .sort({ date: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    data,
+    total,
+    totalPages,
+    page,
+    limit,
+  };
+}
+
 }

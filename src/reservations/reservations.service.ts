@@ -4,16 +4,25 @@ import { Model } from 'mongoose';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { Reservation, ReservationDocument } from './schema/reservation.schema';
+import { WhatsappService } from 'src/whatsapp/whatsapp.service';
 
 @Injectable()
 export class ReservationService {
+  
   constructor(
     @InjectModel(Reservation.name)
     private reservationModel: Model<ReservationDocument>,
+    private whatsappService: WhatsappService
   ) {}
 
   async create(dto: CreateReservationDto) {
     const reservation = await this.reservationModel.create(dto);
+    // console.log(reservation)
+    // await this.whatsappService.sendReservationConfirmation(
+    //   reservation.phone,
+    //   reservation
+    // );
+
     return reservation;
   }
 

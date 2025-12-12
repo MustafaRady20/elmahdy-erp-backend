@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 
 export type ActivityDocument = Activity & Document;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true,collection:"activities" })
 export class Activity {
   @Prop({ required: true, unique: true })
   name: string;

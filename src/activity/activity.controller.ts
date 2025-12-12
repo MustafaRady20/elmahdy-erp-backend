@@ -8,7 +8,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { ActivityService } from './activity.service';
-import { CreateActivityDto, UpdateActivityDto } from './schema/dto/activity.dto';
+import { CreateActivityDto, UpdateActivityDto } from './dto/activity.dto';
 
 @Controller('activities')
 export class ActivityController {

@@ -93,6 +93,26 @@ export class AttendanceController {
     return this.attendanceService.getTodayAttendance();
   }
 
+  @Get('by-date')
+@ApiOperation({ summary: 'Get attendance by specific date' })
+@ApiQuery({
+  name: 'date',
+  required: true,
+  example: '2025-10-05',
+})
+@ApiQuery({
+  name: 'name',
+  required: false,
+  example: 'Mostafa',
+})
+async getByDate(
+  @Query('date') date: string,
+  @Query('name') name?: string,
+) {
+  return this.attendanceService.getAttendanceByDate(date, name);
+}
+
+
   @Get('current-month')
   @ApiOperation({
     summary: 'Get attendance for the current month (optional filters)',

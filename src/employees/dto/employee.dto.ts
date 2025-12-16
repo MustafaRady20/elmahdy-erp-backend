@@ -32,6 +32,8 @@ class PermitInfoDto {
   @IsOptional()
   @IsString()
   permitImage?: string;
+
+
 }
 
 export class CreateEmployeeDto {
@@ -86,6 +88,13 @@ export class CreateEmployeeDto {
   @IsOptional()
   @IsString()
   profileImage?: string;
+    @IsOptional()
+  @IsString()
+  permitStartDate?:string
+
+  @IsOptional()
+  @IsString()
+  permitEndDate?:string
 }
 
 export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {}

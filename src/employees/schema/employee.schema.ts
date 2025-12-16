@@ -78,6 +78,9 @@ export class Employees {
   @Prop()
   nationalIdImage?: string; // صورة الرقم القومي
 
+  @Prop({enum:["active","inActive"],default:"active"})
+  status?: string; 
+
   @Prop()
   militaryServiceCertificateImage?: string; // صورة شهادة الخدمة العسكرية
 

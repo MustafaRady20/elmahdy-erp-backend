@@ -46,7 +46,7 @@ export class AttendanceService {
   }
 
   async checkIn(employeeId: string, lat: number, lng: number) {
-    // this.validateLocation(lat, lng);
+    this.validateLocation(lat, lng);
 
     const existing = await this.attendanceModel.findOne({
       employeeId: new Types.ObjectId(employeeId),
@@ -67,7 +67,7 @@ export class AttendanceService {
   }
 
   async checkOut(employeeId: string, lat: number, lng: number) {
-    // this.validateLocation(lat, lng);
+    this.validateLocation(lat, lng);
 
     const attendance = await this.attendanceModel.findOne({
       employeeId: new Types.ObjectId(employeeId),
@@ -90,21 +90,72 @@ export class AttendanceService {
     return attendance.save();
   }
 
+  // async getTodayAttendance() {
+  //   const startOfDay = new Date();
+  //   startOfDay.setHours(0, 0, 0, 0);
+
+  //   const endOfDay = new Date();
+  //   endOfDay.setHours(23, 59, 59, 999);
+
+  //   const record = await this.attendanceModel.find({
+  //     checkInTime: { $gte: startOfDay, $lte: endOfDay },
+  //   }).populate("employeeId","_id name")
+
+  //   if (!record) return { message: 'No attendance record found for today.' };
+
+  //   return record;
+  // }
+
   async getTodayAttendance() {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+  const today = new Date();
+  const { start, end } = this.getDayRange(today);
 
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+  const records = await this.attendanceModel
+    .find({
+      checkInTime: { $gte: start, $lte: end },
+    })
+    .populate('employeeId', '_id name');
 
-    const record = await this.attendanceModel.find({
-      checkInTime: { $gte: startOfDay, $lte: endOfDay },
-    }).populate("employeeId","_id name")
+  return records;
+}
 
-    if (!record) return { message: 'No attendance record found for today.' };
-
-    return record;
+async getAttendanceByDate(date: string, name?: string) {
+  const parsedDate = new Date(date);
+  if (isNaN(parsedDate.getTime())) {
+    throw new BadRequestException('Invalid date format. Use YYYY-MM-DD');
   }
+
+  const { start, end } = this.getDayRange(parsedDate);
+
+  const employeeFilter: any = {};
+  if (name) employeeFilter.name = new RegExp(name, 'i');
+
+  let employeeIds: Types.ObjectId[] | undefined;
+
+  if (name) {
+    const employees = await this.employeeModel.find(employeeFilter).select('_id');
+    employeeIds = employees.map((e) => e._id);
+  }
+
+  return this.attendanceModel
+    .find({
+      ...(employeeIds && { employeeId: { $in: employeeIds } }),
+      checkInTime: { $gte: start, $lte: end },
+    })
+    .populate('employeeId', '_id name')
+    .sort({ checkInTime: 1 });
+}
+
+
+  private getDayRange(date: Date) {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+
+  return { start, end };
+}
 
   private getMonthRange(year: number, month: number) {
     const start = new Date(year, month - 1, 1);

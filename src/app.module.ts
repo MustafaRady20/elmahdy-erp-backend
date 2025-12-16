@@ -18,6 +18,9 @@ import { CategoryModule } from './categories/categories.module';
 import { WhatsappModule } from './whatsapp/whatsapp.module';
 import { SalaryModule } from './salaries/salaries.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -32,7 +35,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    
+    ScheduleModule.forRoot(),
     EmployeesModule,
     ReservationModule,
     ReviewModule,
@@ -47,7 +50,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ActivityModule,
     WhatsappModule,
     SalaryModule,
-    DashboardModule
+    DashboardModule,
+    CloudinaryModule,
+    MailModule
   ],
   controllers: [AppController],
   providers: [AppService],

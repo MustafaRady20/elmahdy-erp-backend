@@ -21,9 +21,9 @@ export class MailService {
   async sendPermitExpiryEmail(
     to: string,
     employeeName: string,
-    endDate: Date,
+    endDate: Date | undefined,
   ) {
-    const formattedDate = endDate.toLocaleDateString('en-GB');
+    const formattedDate = endDate?.toLocaleDateString('en-GB');
 
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6">

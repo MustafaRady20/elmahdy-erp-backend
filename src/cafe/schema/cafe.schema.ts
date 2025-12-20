@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type CafeDocument = Cafe & Document;
 
@@ -11,8 +11,8 @@ export class Cafe {
   @Prop({ required: false })
   description?: string;
 
-  @Prop({ required: true })
-  branch: string;
+  @Prop({ required: true , ref:"Branch" })
+  branch: Types.ObjectId;
 }
 
 export const CafeSchema = SchemaFactory.createForClass(Cafe);

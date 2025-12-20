@@ -1,18 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Cafe, CafeDocument } from './schema/cafe.schema';
 
 export class CreateCafeDto {
   name: string;
   description?: string;
-  branch: string;
+  branch: Types.ObjectId;
 }
 
 export class UpdateCafeDto {
   name?: string;
   description?: string;
-  branch?: string;
+  branch: Types.ObjectId;
 }
 
 @Injectable()
@@ -25,15 +25,15 @@ export class CafeService {
   }
 
   async findAll(): Promise<Cafe[]> {
-    return this.cafeModel.find().exec();
+    return this.cafeModel.find().populate("branch").exec();
   }
 
   async findByBranch(branch: string): Promise<Cafe[]> {
-    return this.cafeModel.find({ branch }).exec();
+    return this.cafeModel.find({ branch }).populate("branch").exec();
   }
 
   async findOne(id: string): Promise<Cafe> {
-    const cafe = await this.cafeModel.findById(id).exec();
+    const cafe = await this.cafeModel.findById(id).populate("branch").exec();
     if (!cafe) {
       throw new NotFoundException(`Cafe with ID ${id} not found`);
     }
@@ -57,8 +57,5 @@ export class CafeService {
     }
   }
 
-  async getBranches(): Promise<string[]> {
-    const branches = await this.cafeModel.distinct('branch').exec();
-    return branches;
-  }
+
 }

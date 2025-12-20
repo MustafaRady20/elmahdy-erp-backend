@@ -27,11 +27,7 @@ export class CafeController {
     return this.cafeService.findAll();
   }
 
-  @Get('branches')
-  getBranches() {
-    return this.cafeService.getBranches();
-  }
-
+  
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.cafeService.findOne(id);

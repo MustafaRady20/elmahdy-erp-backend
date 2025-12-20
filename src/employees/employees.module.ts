@@ -5,13 +5,15 @@ import { Employees, EmployeesSchema } from './schema/employee.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Employees.name, schema: EmployeesSchema },
     ]),
-    CloudinaryModule
+    CloudinaryModule,
+    MailModule
   ],
   controllers: [EmployeesController],
   providers: [EmployeesService,CloudinaryService],

@@ -5,6 +5,7 @@ import { Employees, EmployeesDocument } from './schema/employee.schema';
 import { CreateEmployeeDto, UpdateEmployeeDto } from './dto/employee.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class EmployeesService {
@@ -13,6 +14,7 @@ export class EmployeesService {
     private employeeModel: Model<EmployeesDocument>,
 
     private readonly cloudinaryService: CloudinaryService,
+    private readonly mailService: MailService,
   ) {}
 
   async create(
@@ -57,7 +59,6 @@ export class EmployeesService {
 
   async findAll(filters: Record<string, any>): Promise<Employees[]> {
     const query: FilterQuery<EmployeesDocument> = {};
-   
 
     if (filters.name) query.name = { $regex: filters.name, $options: 'i' };
     if (filters.phone) query.phone = { $regex: filters.phone, $options: 'i' };
@@ -146,7 +147,7 @@ export class EmployeesService {
     return { message: 'Employee deleted successfully' };
   }
 
-   @Cron(CronExpression.EVERY_DAY_AT_9AM)
+  @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async notifyPermitExpiry() {
     const today = new Date();
     const sevenDaysFromNow = new Date();
@@ -163,13 +164,15 @@ export class EmployeesService {
     for (const employee of employees) {
       if (!employee.email) continue;
 
-      // await this.mailService.sendPermitExpiryEmail(
-      //   employee.email,
-      //   employee.name,
-      //   employee.permitInfo?.endDate,
-      // );
+      await this.mailService.sendPermitExpiryEmail(
+        'Safwat22236@gmail.com',
+        employee.name,
+        employee.permitInfo?.endDate,
+      );
     }
 
-    console.log(`✅ Permit expiry check completed. Found ${employees.length} employees`);
+    console.log(
+      `✅ Permit expiry check completed. Found ${employees.length} employees`,
+    );
   }
 }

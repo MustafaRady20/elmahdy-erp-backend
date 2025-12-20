@@ -18,10 +18,10 @@ export class ReservationService {
   async create(dto: CreateReservationDto) {
     const reservation = await this.reservationModel.create(dto);
     // console.log(reservation)
-    // await this.whatsappService.sendReservationConfirmation(
-    //   reservation.phone,
-    //   reservation
-    // );
+    await this.whatsappService.sendReservationConfirmation(
+      reservation.phone,
+      reservation
+    );
 
     return reservation;
   }

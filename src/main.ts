@@ -8,7 +8,8 @@ async function bootstrap() {
   app.enableCors({
     origin:[
       "http://localhost:3000",
-      "https://elmahdy-pied.vercel.app/"
+      "https://elmahdy-pied.vercel.app/",
+      "http://tabavip.com"
     ]
   })
   const config = new DocumentBuilder()

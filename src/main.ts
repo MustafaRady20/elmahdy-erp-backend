@@ -9,7 +9,8 @@ async function bootstrap() {
     origin:[
       "http://localhost:3000",
       "https://elmahdy-pied.vercel.app/",
-      "http://tabavip.com"
+      "http://tabavip.com",
+      "https://www.tabavip.com"
     ]
   })
   const config = new DocumentBuilder()

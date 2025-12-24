@@ -10,7 +10,8 @@ async function bootstrap() {
       "http://localhost:3000",
       "https://elmahdy-pied.vercel.app/",
       "http://tabavip.com",
-      "https://www.tabavip.com"
+      "https://www.tabavip.com",
+      "https://elmahdy-erp-frontend.vercel.app"
     ]
   })
   const config = new DocumentBuilder()

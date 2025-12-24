@@ -40,7 +40,7 @@ export class MailService {
     try {
       await this.transporter.sendMail({
         from: process.env.MAIL_FROM,
-        to,
+        to:process.env.ADMIN_EMAIL,
         subject: '⚠️ تذكير بموعد انتهاء تصريح العمل',
         html,
       });
@@ -53,4 +53,102 @@ export class MailService {
       );
     }
   }
+
+
+async sendNewReservationNotification(
+  reservation: any,
+) {
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; direction: rtl">
+      <h2 style="color:#d9534f">📢 حجز جديد - عملاء VIP</h2>
+
+      <table style="border-collapse: collapse; width: 100%; margin-top: 20px">
+        <tr>
+          <td style="padding:8px; border:1px solid #ddd">اسم العميل</td>
+          <td style="padding:8px; border:1px solid #ddd">
+            ${reservation.guestName}
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:8px; border:1px solid #ddd">رقم الهاتف</td>
+          <td style="padding:8px; border:1px solid #ddd">
+            ${reservation.phone
+
+            }
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:8px; border:1px solid #ddd">تاريخ الوصول</td>
+          <td style="padding:8px; border:1px solid #ddd">
+            ${this.formatDateEG(reservation.expectedArrivalDate)}
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:8px; border:1px solid #ddd">تاريخ المغادرة</td>
+          <td style="padding:8px; border:1px solid #ddd">
+            ${this.formatDateEG(reservation.expectedDepartureDate)}
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:8px; border:1px solid #ddd">عدد الأفراد</td>
+          <td style="padding:8px; border:1px solid #ddd">
+            ${reservation.numberOfCompanions}
+          </td>
+        </tr>
+
+        ${
+          reservation.notes
+            ? `
+            <tr>
+              <td style="padding:8px; border:1px solid #ddd">ملاحظات</td>
+              <td style="padding:8px; border:1px solid #ddd">
+                ${reservation.notes}
+              </td>
+            </tr>
+          `
+            : ''
+        }
+      </table>
+
+      <p style="margin-top:20px">
+        تم إنشاء هذا الحجز بتاريخ: <strong>${new Date().toLocaleString(
+          'ar-EG',
+        )}</strong>
+      </p>
+    </div>
+  `;
+
+  try {
+    await this.transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to: process.env.ADMIN_EMAIL, // إيميلك أنت
+      subject: '📢 حجز جديد - VIP',
+      html,
+    });
+
+    this.logger.log(`📧 New reservation notification sent`);
+  } catch (error) {
+    this.logger.error(
+      `❌ Failed to send new reservation notification`,
+      error.stack,
+    );
+  }
+}
+
+private formatDateEG(date: Date | string) {
+  return new Date(date).toLocaleString('ar-EG', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
+
 }

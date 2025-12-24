@@ -171,6 +171,8 @@ export class EmployeesService {
       );
     }
 
+    
+
     console.log(
       `✅ Permit expiry check completed. Found ${employees.length} employees`,
     );

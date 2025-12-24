@@ -64,10 +64,20 @@ export class WhatsappService implements OnModuleInit {
       const payload = {
         messaging_product: 'whatsapp',
         to: to,
-        type: 'text',
-        text: {
-          body: message
-        }
+        type: 'template',
+        template: {
+        name: 'booking_confirmation',
+        language: { code: 'ar' },
+        components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: "name" },
+              { type: 'text', text: "" },
+            ],
+          },
+        ],
+      },
       };
 
       console.log('=== Request Details ===');

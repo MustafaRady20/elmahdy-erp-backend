@@ -5,6 +5,7 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { Reservation, ReservationDocument } from './schema/reservation.schema';
 import { WhatsappService } from 'src/whatsapp/whatsapp.service';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class ReservationService {
@@ -12,7 +13,8 @@ export class ReservationService {
   constructor(
     @InjectModel(Reservation.name)
     private reservationModel: Model<ReservationDocument>,
-    private whatsappService: WhatsappService
+    private whatsappService: WhatsappService,
+    private emailService: MailService
   ) {}
 
   async create(dto: CreateReservationDto) {
@@ -23,6 +25,7 @@ export class ReservationService {
       reservation
     );
 
+    await this.emailService.sendNewReservationNotification(reservation)
     return reservation;
   }
 

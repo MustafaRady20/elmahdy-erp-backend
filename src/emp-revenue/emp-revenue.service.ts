@@ -23,11 +23,6 @@ export class EmpRevenueService {
   }
 
   async findAll() {
-    console.log(
-      '📌 EmpRevenue Collection Name:',
-      this.model.collection.collectionName,
-    );
-
     return this.model.find().populate('activity').populate('employee').exec();
   }
 
@@ -43,32 +38,74 @@ export class EmpRevenueService {
 
   // ---------------- REPORTS ---------------- //
 
-  private getDateRange(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
+  private getDateRange(
+    period: 'daily' | 'weekly' | 'monthly' | 'yearly',
+    year?: number,
+    month?: number,
+    date?: Date,
+  ) {
     const now = new Date();
     let start: Date;
+    let end: Date;
 
+    // If specific date is provided, use that
+    if (date) {
+      start = new Date(date);
+      start.setHours(0, 0, 0, 0);
+      end = new Date(date);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+
+    // If year and month are provided
+    if (year && month) {
+      start = new Date(year, month - 1, 1); // month is 1-indexed in the input
+      end = new Date(year, month, 0, 23, 59, 59, 999); // last day of the month
+      return { start, end };
+    }
+
+    // If only year is provided
+    if (year) {
+      start = new Date(year, 0, 1);
+      end = new Date(year, 11, 31, 23, 59, 59, 999);
+      return { start, end };
+    }
+
+    // Otherwise use the period
     switch (period) {
       case 'daily':
         start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
         break;
       case 'weekly':
         const day = now.getDay();
         start = new Date(now);
         start.setDate(now.getDate() - day);
+        start.setHours(0, 0, 0, 0);
+        end = new Date(now);
+        end.setHours(23, 59, 59, 999);
         break;
       case 'monthly':
         start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         break;
       case 'yearly':
         start = new Date(now.getFullYear(), 0, 1);
+        end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
         break;
     }
 
-    return { start, end: now };
+    return { start, end };
   }
 
-  async report(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
-    const { start, end } = this.getDateRange(period);
+  async report(
+    period: 'daily' | 'weekly' | 'monthly' | 'yearly',
+    year?: number,
+    month?: number,
+    date?: string,
+  ) {
+    const parsedDate = date ? new Date(date) : undefined;
+    const { start, end } = this.getDateRange(period, year, month, parsedDate);
 
     const match = { date: { $gte: start, $lte: end } };
 
@@ -89,6 +126,7 @@ export class EmpRevenueService {
         },
       },
       { $unwind: '$employee' },
+      { $sort: { total: -1 } }, // Sort by total revenue descending
     ]);
 
     const revenueByActivity = await this.model.aggregate([
@@ -103,39 +141,49 @@ export class EmpRevenueService {
         },
       },
       { $unwind: '$activity' },
+      { $sort: { total: -1 } }, // Sort by total revenue descending
     ]);
 
     return {
       period,
+      filters: {
+        year,
+        month,
+        date,
+      },
+      dateRange: {
+        start,
+        end,
+      },
       totalRevenue: totalRevenue[0]?.totalRevenue || 0,
       revenueByEmployee,
       revenueByActivity,
     };
   }
-async findByEmployee(employeeId: string, page = 1, limit = 20) {
-  const skip = (page - 1) * limit;
 
-  const total = await this.model.countDocuments({
-    employee: new Types.ObjectId(employeeId),
-  });
+  async findByEmployee(employeeId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
 
-  const data = await this.model
-    .find({ employee: new Types.ObjectId(employeeId) })
-    .populate('activity')
-    .populate('employee')
-    .sort({ date: -1 })
-    .skip(skip)
-    .limit(limit);
+    const total = await this.model.countDocuments({
+      employee: new Types.ObjectId(employeeId),
+    });
 
-  const totalPages = Math.ceil(total / limit);
+    const data = await this.model
+      .find({ employee: new Types.ObjectId(employeeId) })
+      .populate('activity')
+      .populate('employee')
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit);
 
-  return {
-    data,
-    total,
-    totalPages,
-    page,
-    limit,
-  };
-}
+    const totalPages = Math.ceil(total / limit);
 
+    return {
+      data,
+      total,
+      totalPages,
+      page,
+      limit,
+    };
+  }
 }

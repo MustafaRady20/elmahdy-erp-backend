@@ -22,6 +22,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MailModule } from './mail/mail.module';
 import { VipRevenuesModule } from './vip-revenues/vip-revenues.module';
+import { CurrencyModule } from './currency/currency.module';
 
 @Module({
   imports: [
@@ -54,7 +55,8 @@ import { VipRevenuesModule } from './vip-revenues/vip-revenues.module';
     DashboardModule,
     CloudinaryModule,
     MailModule,
-    VipRevenuesModule
+    VipRevenuesModule,
+    CurrencyModule
   ],
   controllers: [AppController],
   providers: [AppService],

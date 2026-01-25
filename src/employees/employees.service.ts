@@ -17,45 +17,43 @@ export class EmployeesService {
     private readonly mailService: MailService,
   ) {}
 
-  async create(
-    dto: CreateEmployeeDto,
-    files: {
-      profileImage?: Express.Multer.File[];
-      nationalIdImage?: Express.Multer.File[];
-      militaryServiceCertificateImage?: Express.Multer.File[];
-      permitImage?: Express.Multer.File[];
+ async create(
+  dto: CreateEmployeeDto,
+  files: {
+    profileImage?: Express.Multer.File[];
+    nationalIdImage?: Express.Multer.File[];
+    militaryServiceCertificateImage?: Express.Multer.File[];
+    permitImage?: Express.Multer.File[];
+  } = {},
+): Promise<Employees> {
+  const upload = async (file?: Express.Multer.File, folder?: string) => {
+    if (!file) return undefined;
+    const result: any = await this.cloudinaryService.uploadImage(file, folder);
+    return result.secure_url;
+  };
+
+  const employee = new this.employeeModel({
+    ...dto,
+    password: dto.phone,
+    profileImage: await upload(files.profileImage?.[0], 'employees/profile'),
+    nationalIdImage: await upload(
+      files.nationalIdImage?.[0],
+      'employees/national-id',
+    ),
+    militaryServiceCertificateImage: await upload(
+      files.militaryServiceCertificateImage?.[0],
+      'employees/military',
+    ),
+    permitInfo: {
+      startDate: dto.permitStartDate,
+      endDate: dto.permitEndDate,
+      permitImage: await upload(files.permitImage?.[0], 'employees/permit'),
     },
-  ): Promise<Employees> {
-    const upload = async (file?: Express.Multer.File, folder?: string) => {
-      if (!file) return undefined;
-      const result: any = await this.cloudinaryService.uploadImage(
-        file,
-        folder,
-      );
-      return result.secure_url;
-    };
+  });
 
-    const employee = new this.employeeModel({
-      ...dto,
-      password: dto.phone,
-      profileImage: await upload(files.profileImage?.[0], 'employees/profile'),
-      nationalIdImage: await upload(
-        files.nationalIdImage?.[0],
-        'employees/national-id',
-      ),
-      militaryServiceCertificateImage: await upload(
-        files.militaryServiceCertificateImage?.[0],
-        'employees/military',
-      ),
-      permitInfo: {
-        startDate: dto.permitStartDate,
-        endDate: dto.permitEndDate,
-        permitImage: await upload(files.permitImage?.[0], 'employees/permit'),
-      },
-    });
+  return employee.save();
+}
 
-    return employee.save();
-  }
 
   async findAll(filters: Record<string, any>): Promise<Employees[]> {
     const query: FilterQuery<EmployeesDocument> = {};

@@ -11,11 +11,18 @@ export class EmpRevenue {
   @Prop({ required: true })
   amount: number;
 
+
+  @Prop({ required: false })
+  EGPamount: number;
+
   @Prop({ type: Date, default: Date.now })
   date: Date;
 
   @Prop({ type: Types.ObjectId, ref: 'Employees', required: true })
   employee: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Currency', required: true })
+  currency: Types.ObjectId;
 }
 
 export const RevenueSchema = SchemaFactory.createForClass(EmpRevenue);

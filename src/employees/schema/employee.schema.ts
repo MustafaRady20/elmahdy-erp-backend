@@ -84,7 +84,7 @@ export class Employees {
   @Prop()
   militaryServiceCertificateImage?: string; // صورة شهادة الخدمة العسكرية
 
-  @Prop()
+  @Prop({required: false})
   profileImage?: string; // صورة شخصية للموظف
 }
 

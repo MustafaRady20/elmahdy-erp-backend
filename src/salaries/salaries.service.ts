@@ -36,11 +36,11 @@ export class SalaryService {
 
     const totalBagging = revenues
       .filter(r => r.activity.name === 'حمل حقائب')
-      .reduce((sum, r) => sum + r.amount, 0);
+      .reduce((sum, r) => sum + r.EGPamount, 0);
 
     const totalCleaning = revenues
       .filter(r => r.activity.name === 'نظافة')
-      .reduce((sum, r) => sum + r.amount, 0);
+      .reduce((sum, r) => sum + r.EGPamount, 0);
 
     const variableSalary = variableEmployeesCount > 0
       ? (totalCleaning + totalBagging / 3) / variableEmployeesCount

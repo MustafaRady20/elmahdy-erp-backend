@@ -6,31 +6,77 @@ import {
   CreateEmpRevenueDto,
   UpdateEmpRevenueDto,
 } from './dto/emp-revenue.dto';
+import { Currency, CurrencyDocument } from 'src/currency/shcema/currency.schema';
 
 @Injectable()
 export class EmpRevenueService {
   constructor(
     @InjectModel(EmpRevenue.name)
     private readonly model: Model<EmpRevenueDocument>,
+     @InjectModel(Currency.name)
+    private readonly currencyModel: Model<CurrencyDocument>
   ) {}
 
-  async create(dto: CreateEmpRevenueDto) {
-    return this.model.create({
-      ...dto,
-      activity: new Types.ObjectId(dto.activity),
-      employee: new Types.ObjectId(dto.employee),
-    });
+async create(dto: CreateEmpRevenueDto) {
+  const currency = await this.currencyModel.findById(dto.currency);
+
+  if (!currency) {
+    throw new NotFoundException('Currency not found');
   }
+  const EGPamount = dto.amount * currency.exchangeRate;
+
+  return this.model.create({
+    activity: new Types.ObjectId(dto.activity),
+    employee: new Types.ObjectId(dto.employee),
+    currency: new Types.ObjectId(dto.currency),
+
+    amount: dto.amount,        
+    EGPamount,                  
+    date: dto.date ?? new Date(),
+  });
+}
+
 
   async findAll() {
-    return this.model.find().populate('activity').populate('employee').exec();
+    return this.model
+      .find()
+      .populate('activity')
+      .populate('employee')
+      .populate('currency')
+      .exec();
   }
 
   async update(id: string, dto: UpdateEmpRevenueDto) {
-    const record = await this.model.findByIdAndUpdate(id, dto, { new: true });
-    if (!record) throw new NotFoundException('Record not found');
-    return record;
+  const existing = await this.model.findById(id);
+
+  if (!existing) {
+    throw new NotFoundException('Record not found');
   }
+
+  const amount = dto.amount ?? existing.amount;
+  const currencyId = dto.currency ?? existing.currency;
+
+  const currency = await this.currencyModel.findById(currencyId);
+  if (!currency) {
+    throw new NotFoundException('Currency not found');
+  }
+
+  const EGPamount = amount * currency.exchangeRate;
+
+  const record = await this.model.findByIdAndUpdate(
+    id,
+    {
+      ...dto,
+      amount,
+      currency: currencyId,
+      EGPamount,
+    },
+    { new: true },
+  );
+
+  return record;
+}
+
 
   async delete(id: string) {
     return this.model.findByIdAndDelete(id);
@@ -75,7 +121,15 @@ export class EmpRevenueService {
     switch (period) {
       case 'daily':
         start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+        end = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          23,
+          59,
+          59,
+          999,
+        );
         break;
       case 'weekly':
         const day = now.getDay();
@@ -87,7 +141,15 @@ export class EmpRevenueService {
         break;
       case 'monthly':
         start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        end = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999,
+        );
         break;
       case 'yearly':
         start = new Date(now.getFullYear(), 0, 1);
@@ -111,12 +173,12 @@ export class EmpRevenueService {
 
     const totalRevenue = await this.model.aggregate([
       { $match: match },
-      { $group: { _id: null, totalRevenue: { $sum: '$amount' } } },
+      { $group: { _id: null, totalRevenue: {$sum: '$EGPamount' } } },
     ]);
 
     const revenueByEmployee = await this.model.aggregate([
       { $match: match },
-      { $group: { _id: '$employee', total: { $sum: '$amount' } } },
+      { $group: { _id: '$employee', total: { $sum: '$EGPamount' } } },
       {
         $lookup: {
           from: 'employees',
@@ -131,7 +193,7 @@ export class EmpRevenueService {
 
     const revenueByActivity = await this.model.aggregate([
       { $match: match },
-      { $group: { _id: '$activity', total: { $sum: '$amount' } } },
+      { $group: { _id: '$activity', total: { $sum: '$EGPamount' } } },
       {
         $lookup: {
           from: 'activities',
@@ -172,16 +234,15 @@ export class EmpRevenueService {
       .find({ employee: new Types.ObjectId(employeeId) })
       .populate('activity')
       .populate('employee')
+      .populate('currency')
       .sort({ date: -1 })
       .skip(skip)
       .limit(limit);
 
-    const totalPages = Math.ceil(total / limit);
-
     return {
       data,
       total,
-      totalPages,
+      totalPages: Math.ceil(total / limit),
       page,
       limit,
     };
